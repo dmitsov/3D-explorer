@@ -1,0 +1,129 @@
+<!DOCTYPE/>
+
+<html>
+
+<head>
+	<title> 3D explorer </title>
+	
+	<script src="/data/jquery-2.2.0.min.js"></script>
+	<script src="/data/jquery-migrate-1.2.1.min.js"></script>
+	
+	<script src="/data/basic-gl.js"></script>
+	<script src="/data/shaders.js"></script>
+	<script src="/data/matrix.js"></script>
+	<script src="/data/primitives.js"></script>
+	<script src="/data/texture.js"></script>
+	<script src="/data/model.js"></script>
+	
+	<script>
+		function start(){
+			var canvas = document.getElementById("explorer");
+			canvas.addEventListener("webglcontextlost",function(event){event.preventDefault();},false);
+			canvas.addEventListener("webglcontextrestored",function(event){init();},false);
+			
+			init();
+			drawFrame();
+		}
+		
+		var models = [];
+		
+		function addModel(data){
+			var m = new Model([0,0,0],data);
+			m.rot = [0,0,-90,0]
+			models.push(m)
+			
+		}
+		
+		function addSimpleModel(data){
+			var m = new SimpleModel([0,0,0],data)
+			models.push(m)
+		}
+		
+		
+		function init(){
+			gl = getContext("explorer");
+			glprog = getProgram(vShader,fShader);
+			getVariables();
+			var canvas = document.getElementById("explorer");
+			var displayHeight = canvas.clientHeight;
+			var displayWidth = canvas.clientWidth;
+			if(gl.canvas.width != displayWidth || gl.canvas.height != displayHeight){
+				gl.canvas.width = displayWidth;
+				gl.canvas.height = displayHeight;
+			}
+			
+			gl.enable(gl.DEPTH_TEST);
+			gl.clearColor(1,1,1,1);
+			
+			gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
+			identity();
+			perspective(30,gl.canvas.width/gl.canvas.height,1,40000);
+			
+	//		gl.uniform3f(uAmbientColor,0.3,0.3,0.3);
+	//		gl.uniform3f(uDiffuseColor,0.8,0.8,0.8);
+	//		gl.uniform3f(uSpecularColor,1,1,1);
+	//		gl.uniform1f(uShininess,100);
+			gl.uniform3f(uLightDir,0,0,1);
+			
+			gl.uniform1i(uSampler,0);
+			gl.uniformMatrix3fv(uTexMatrix,false,texIdentity());
+			
+			cube = new Cuboid([0,0,0],[1,2,1]);
+			cube.rot = [0,90,0,0];
+			cube.color = [1,0,0];
+			
+			$.ajax({
+				url:"/data/model/cow.obj?simple=true",
+				method: 'GET',
+				data: null,
+				success: addSimpleModel,
+			//	timeout: 5000
+			});
+		}
+		
+		function resize(){
+			var canvas = document.getElementById("explorer");
+			gl.canvas.height = canvas.height;
+			gl.canvas.width = canvas.width;
+			gl.viewport(0,0,canvas.width,canvas.height);
+			perspective(30,canvas.width/canvas.height,1,40000);
+		}
+		
+		function drawFrame(){
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			lookAt([0,10,0],[0,0,0],[0,1,0]);
+			
+			if(models.length > 0){
+				
+				models[0].rot[0] += random(0,2);
+				
+				models[0].scale = [3,3,3];
+				models[0].draw();
+			}
+			//cube.draw();
+			requestAnimationFrame(drawFrame);
+		}
+		
+	</script>
+
+	<style>
+		html,body{
+			margin: 0px;
+			width:100%;
+			height: 100%;
+			overflow: hidden;
+		}
+	
+		canvas {
+			width : 100%;
+			height:100%;
+		}
+	</style>
+
+</head>
+
+<body onload="start()">
+
+<canvas id="explorer" onresize="resize()"><canvas>
+</body>
+</html>
