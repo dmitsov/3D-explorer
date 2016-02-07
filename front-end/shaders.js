@@ -1,32 +1,34 @@
 ﻿var vShader =
-	'uniform mat4 uProjectionMatrix;'+
-	'uniform mat4 uViewMatrix;'+
-	'uniform mat4 uModelMatrix;'+
-	'uniform mat4 uNormalMatrix;'+
-	'uniform bool uUseNormalMatrix;'+
+	'uniform mat4 uProjectionMatrix;\n'+
+	'uniform mat4 uViewMatrix;\n'+
+	'uniform mat4 uModelMatrix;\n'+
+	'uniform mat4 uNormalMatrix;\n'+
+	'uniform bool uUseNormalMatrix;\n'+
 	''+
-	'uniform vec3 uAmbientColor;'+
+	'uniform vec3 uAmbientColor;\n'+
 	''+
-	'uniform vec3 uLightDir;'+
+	'uniform vec3 uLightDir;\n'+
 	''+
-	'attribute vec3 aXYZ;'+
-	'attribute vec2 aST;'+
-	'attribute vec3 aColor;'+
-	'attribute vec3 aNormal;'+
+	'attribute vec3 aXYZ;\n'+
+	'attribute vec2 aST;\n'+
+	'attribute vec3 aColor;\n'+
+	'attribute vec3 aNormal;\n'+
 	''+
-	'varying vec3 vST;'+
-	'varying vec3 vColor;'+
-	'varying vec3 vNormal;'+
+	'varying vec3 vST;\n'+
+	'varying vec3 vColor;\n'+
+	'varying vec3 vNormal;\n'+
 	'varying vec3 vPos;'+
 	''+
 	'void main(){'+
-	'	mat4 mvMatrix = uViewMatrix * uModelMatrix;'+
+	'	mat4 mvMatrix = uViewMatrix * uModelMatrix;\n'+
 	'	gl_Position = uProjectionMatrix * mvMatrix * vec4(aXYZ,1);'+
 	'	mat4 nMatrix = uUseNormalMatrix?uNormalMatrix:mvMatrix;'+
-	
+	''+
 	'	vec4 pos = mvMatrix*vec4(aXYZ,1);'+
-	'	vST = vec3(aST,1);'+
-	'	vColor = uAmbientColor*aColor;'+
+	'	vec2 st = aST*1.0;'+
+	'	vST = vec3(st,1);'+
+	'	vec3 color = uAmbientColor*aColor;'+
+	'	vColor = color;'+
 	''+
 	'	vec3 light = normalize(-uLightDir);'+
 	'	vec3 normal = vec3(normalize(nMatrix*vec4(aNormal,0)));'+
@@ -35,7 +37,7 @@
 	'}';
 	
 var fShader =
-	'precision mediump float;'+
+	'precision mediump float;\n'+
 	'uniform mat3 uTexMatrix;'+
 	'uniform sampler2D uSampler;'+
 	'uniform highp vec3 uLightDir;'+
@@ -43,12 +45,12 @@ var fShader =
 	'uniform float uShinines;'+
 	'uniform vec3 uDiffuseColor;'+
 	'uniform bool uIsTextured;'+
-	
+	''+
 	'varying vec3 vPos;'+
 	'varying vec3 vST;'+
 	'varying vec3 vColor;'+
 	'varying vec3 vNormal;'+
-	
+	''+
 	'void main()'+
 	'{'+
 	'	vec4 texCol =  texture2D(uSampler,(uTexMatrix*vST).st);'+
@@ -56,13 +58,9 @@ var fShader =
 	'	vec3 reflectedLight = normalize(reflect(light,vNormal));'+
 	'	float cosa = max(dot(reflectedLight,vNormal),0.0);'+
 	'	vec3 color = vColor;'+
-	'	color += color*uDiffuseColor*abs(dot(vNormal,reflectedLight));'+
-	'	vec4 modelCol;'+
-	'	if(uIsTextured){'+
-	'		modelCol = texCol*vec4(color,1.0);'+
-	'	} else {'+
-	'		modelCol = vec4(color,1.0);'+
-	'	}'+
+	'	vec3 dColor = color*uDiffuseColor*abs(dot(vNormal,reflectedLight));'+
+	'	color += dColor;'+
+	'	vec4 modelCol=uIsTextured?texCol*vec4(color,1.0):vec4(color,1.0);'+
 	'	vec3 specularColor = uSpecularColor*pow(cosa,uShinines);'+
-	'	gl_FragColor = vec4(1,0,0,1) + vec4(specularColor*0.9,0.0);'+
+	'	gl_FragColor = modelCol + vec4(specularColor*0.9,0.0);'+
 	'}';
